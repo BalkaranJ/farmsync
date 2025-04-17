@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -19,6 +22,10 @@ model User {
   // Relations based on user type
   farmerProfile    FarmerProfile?
   researcherProfile ResearcherProfile?
+  
+  // User activity tracking
+  analysisRequests AnalysisRequest[]
+  savedReports     SavedReport[]
 }
 
 model FarmerProfile {
@@ -44,4 +51,172 @@ model ResearcherProfile {
 enum UserType {
   FARMER
   RESEARCHER
+}
+
+// Agricultural Data Models
+model Region {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  code            String?  @unique
+  type            String?  // province, territory, etc.
+  country         String   @default("Canada")
+  
+  // Geographic data
+  area            Float?   // in square kilometers
+  agriculturalArea Float?  // in hectares
+  
+  // Relations
+  emissionsData    EmissionsData[]
+  droughtData      DroughtData[]
+  agriculturalData AgriculturalData[]
+  soilData         SoilData[]
+  headTaxData      HeadTaxData[]
+}
+
+model EmissionsData {
+  id               String   @id @default(uuid())
+  year             Int
+  quarter          Int?
+  totalEmissions   Float    // in Mt CO2e
+  methane          Float?   // in Mt CO2e
+  nitrousOxide     Float?   // in Mt CO2e
+  co2              Float?   // in Mt CO2e
+  source           String?  // data source reference
+  
+  // Categories
+  agriculture      Float?   // agriculture portion in Mt CO2e
+  cropProduction   Float?   // in Mt CO2e
+  livestock        Float?   // in Mt CO2e
+  soilManagement   Float?   // in Mt CO2e
+  energyUse        Float?   // in Mt CO2e
+  landConversion   Float?   // in Mt CO2e
+  
+  // Relations
+  regionId         String
+  region           Region   @relation(fields: [regionId], references: [id])
+  
+  // Timestamps
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@unique([regionId, year, quarter])
+}
+
+model DroughtData {
+  id               String   @id @default(uuid())
+  year             Int
+  month            Int?
+  severity         Float    // on a scale of 0-10
+  category         String?  // e.g., "Crop Loss", "Soil Moisture", etc.
+  impactScore      Float?   // on a scale of 0-10
+  affectedArea     Float?   // in hectares
+  source           String?  // data source reference
+  
+  // Relations
+  regionId         String
+  region           Region   @relation(fields: [regionId], references: [id])
+  
+  // Timestamps
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@unique([regionId, year, month, category])
+}
+
+model AgriculturalData {
+  id                 String   @id @default(uuid())
+  year               Int
+  cropDiversity      Float?   // on a scale of 0-10
+  livestockDensity   Float?   // on a scale of 0-10
+  irrigation         Float?   // on a scale of 0-10
+  fertilizerUse      Float?   // on a scale of 0-10
+  landConversion     Float?   // on a scale of 0-10
+  sustainablePractices Float? // on a scale of 0-10
+  totalFarmland      Float?   // in hectares
+  cropProduction     Float?   // in tonnes
+  livestockProduction Float?  // in appropriate units
+  source             String?  // data source reference
+  
+  // Relations
+  regionId           String
+  region             Region   @relation(fields: [regionId], references: [id])
+  
+  // Timestamps
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  
+  @@unique([regionId, year])
+}
+
+model SoilData {
+  id               String   @id @default(uuid())
+  year             Int
+  soilType         String?
+  organicMatter    Float?   // percentage
+  pH               Float?
+  erosionRisk      Float?   // on a scale of 0-10
+  carbonContent    Float?   // in g/kg
+  nitrogenContent  Float?   // in g/kg
+  phosphorusContent Float?  // in mg/kg
+  potassiumContent Float?   // in mg/kg
+  area             Float?   // in hectares
+  source           String?  // data source reference
+  
+  // Relations
+  regionId         String
+  region           Region   @relation(fields: [regionId], references: [id])
+  
+  // Timestamps
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@unique([regionId, year, soilType])
+}
+
+model HeadTaxData {
+  id               String   @id @default(uuid())
+  year             Int
+  permitZone       String
+  taxRate          Float?   // in dollars
+  permitsIssued    Int?
+  totalRevenue     Float?   // in dollars
+  livestockType    String?
+  livestockCount   Int?
+  source           String?  // data source reference
+  
+  // Relations
+  regionId         String
+  region           Region   @relation(fields: [regionId], references: [id])
+  
+  // Timestamps
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@unique([regionId, year, permitZone])
+}
+
+// User activity models
+model AnalysisRequest {
+  id               String   @id @default(uuid())
+  datasets         String[] // IDs of datasets used
+  region           String   // selected region
+  timestamp        DateTime @default(now())
+  
+  // Relations
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SavedReport {
+  id               String   @id @default(uuid())
+  title            String
+  description      String?
+  datasets         String[] // IDs of datasets used
+  region           String   // selected region
+  reportData       Json     // JSON data for the report
+  timestamp        DateTime @default(now())
+  
+  // Relations
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
