@@ -76,7 +76,7 @@ export default function LoginForm() {
       </div>
       
       <h1 className="auth-title">Log in</h1>
-      <p className="auth-subtitle">Don't have an account? <Link href="/signup" className="text-[#70c04e] hover:underline">Sign up</Link></p>
+      <p className="auth-subtitle">Do not have an account? <Link href="/signup" className="text-[#70c04e] hover:underline">Sign up</Link></p>
       
       <div className="space-y-4 mb-6">
         <button className="w-full flex items-center justify-center gap-3 btn btn-outline">
