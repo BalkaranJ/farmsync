@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #70c04e;
+  --primary-dark: #5aa03c;
+  --secondary-color: #3d4852;
+  --light-color: #f8f9fa;
+  --text-color: #333;
+  --light-gray: #e9ecef;
+  --medium-gray: #ced4da;
+  --dark-gray: #6c757d;
+  --white: #ffffff;
+}
+
+@layer base {
+  body {
+    @apply text-gray-800 bg-white;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
+      Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  }
+  
+  a {
+    @apply text-inherit no-underline;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-300 cursor-pointer;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white border border-primary hover:bg-primary-dark;
+  }
+  
+  .btn-outline {
+    @apply border border-gray-300 text-gray-700 bg-transparent hover:bg-gray-100;
+  }
+  
+  .btn-large {
+    @apply px-6 py-3 text-base;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-md font-normal focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20;
+  }
+  
+  .form-label {
+    @apply block mb-2 text-sm font-medium text-gray-700;
+  }
+  
+  .form-group {
+    @apply mb-5;
+  }
+  
+  .auth-container {
+    @apply w-full max-w-xl mx-auto p-6 bg-white rounded-lg shadow-md
+
+  }
+  
+  .auth-title {
+    @apply text-2xl font-bold text-center mb-2 text-gray-800;
+  }
+  
+  .auth-subtitle {
+    @apply text-center text-gray-500 mb-6 text-sm;
+  }
+  
+  .divider {
+    @apply flex items-center my-6 text-gray-500 text-sm;
+  }
+  
+  .divider::before,
+  .divider::after {
+    @apply content-[''] flex-1 h-px bg-gray-300;
+  }
+  
+  .divider-text {
+    @apply px-4;
+  }
+}
