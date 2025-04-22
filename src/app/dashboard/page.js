@@ -25,40 +25,70 @@ export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState('All Canada');
   const [selectedDatasets, setSelectedDatasets] = useState(datasets);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [compareMode, setCompareMode] = useState(false);
+  const [error, setError] = useState(null);
   
+  // Check if user is logged in
   useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('token');
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+      
+      try {
+        // Basic validation of token format
+        if (token.split('.').length !== 3) {
+          throw new Error('Invalid token format');
+        }
+
+        // Safely decode the token
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          
+          // Check if payload has required fields
+          if (!payload.id || !payload.email || !payload.userType) {
+            throw new Error('Invalid token data');
+          }
+          
+          // Check token expiration
+          if (payload.exp && payload.exp * 1000 < Date.now()) {
+            throw new Error('Token expired');
+          }
+          
+          setUser({
+            id: payload.id,
+            email: payload.email,
+            userType: payload.userType
+          });
+        } catch (decodeError) {
+          console.error('Token decode error:', decodeError);
+          throw new Error('Invalid token');
+        }
+      } catch (error) {
+        console.error('Authentication error:', error);
+        localStorage.removeItem('token');
+        router.push('/login');
+        return;
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-    
-    // For demo purposes, we'll decode the token
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUser({
-        id: payload.id,
-        email: payload.email,
-        userType: payload.userType
-      });
-      setLoading(false);
-    } catch (error) {
-      console.error('Token error:', error);
-      localStorage.removeItem('token');
-      router.push('/login');
-    }
+    checkAuth();
   }, [router]);
 
+  // Fetch analysis data based on selected datasets and region
   useEffect(() => {
-    // Fetch analysis data based on selected datasets and region
     const fetchAnalysisData = async () => {
-      if (loading) return;
+      // Only fetch data if user is loaded and not in loading state
+      if (loading || !user) return;
       
       const activeDatasets = selectedDatasets
         .filter(dataset => dataset.isSelected)
@@ -69,14 +99,20 @@ export default function Dashboard() {
         return;
       }
       
-      setLoading(true);
+      setDataLoading(true);
+      setError(null);
       
       try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Authentication token not found');
+        }
+        
         const response = await fetch('/api/analysis', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             datasets: activeDatasets,
@@ -85,20 +121,22 @@ export default function Dashboard() {
         });
         
         if (!response.ok) {
-          throw new Error('Failed to fetch analysis data');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch analysis data');
         }
         
         const data = await response.json();
         setAnalysisResult(data);
       } catch (error) {
         console.error('Error fetching analysis data:', error);
+        setError(error.message || 'Failed to load dashboard data');
       } finally {
-        setLoading(false);
+        setDataLoading(false);
       }
     };
     
     fetchAnalysisData();
-  }, [selectedDatasets, selectedRegion, loading]);
+  }, [selectedDatasets, selectedRegion, user, loading]);
   
   const handleDatasetToggle = (datasetId) => {
     setSelectedDatasets(prevDatasets => 
@@ -153,7 +191,18 @@ export default function Dashboard() {
           </div>
           
           <div className="lg:col-span-3 space-y-6">
-            {analysisResult ? (
+            {error && (
+              <div className="bg-red-50 text-red-700 p-4 rounded-lg shadow-md mb-4">
+                <p className="font-medium">Error loading dashboard data</p>
+                <p className="text-sm">{error}</p>
+              </div>
+            )}
+            
+            {dataLoading ? (
+              <div className="flex justify-center py-12">
+                <LoadingSpinner />
+              </div>
+            ) : analysisResult ? (
               <>
                 <MapVisualization 
                   data={analysisResult.geographicData}

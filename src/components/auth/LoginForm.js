@@ -51,7 +51,8 @@ export default function LoginForm() {
       // Redirect to dashboard
       router.push('/dashboard');
     } catch (err) {
-      setError(err.message);
+      console.error('Login error:', err);
+      setError(err.message || 'Authentication failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +72,7 @@ export default function LoginForm() {
             width={100} 
             height={15} 
             className="w-full h-auto"
-            />
+          />
         </Link>
       </div>
       
@@ -114,6 +115,7 @@ export default function LoginForm() {
             id="email"
             className={`input-field ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`}
             {...register('email')}
+            disabled={isLoading}
           />
           {errors.email && (
             <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
@@ -136,6 +138,7 @@ export default function LoginForm() {
             id="password"
             className={`input-field ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`}
             {...register('password')}
+            disabled={isLoading}
           />
           {errors.password && (
             <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
@@ -152,7 +155,15 @@ export default function LoginForm() {
           className="w-full btn btn-primary py-3"
           disabled={isLoading}
         >
-          {isLoading ? 'Logging in...' : 'Log in'}
+          {isLoading ? (
+            <span className="flex items-center justify-center">
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Logging in...
+            </span>
+          ) : 'Log in'}
         </button>
       </form>
     </div>
